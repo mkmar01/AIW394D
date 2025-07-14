@@ -21,7 +21,9 @@ class WeatherForecast:
             min_per_day: tensor of size (num_days,)
             max_per_day: tensor of size (num_days,)
         """
-        raise NotImplementedError
+        min = torch.amin(self.data, dim = 1)
+        max = torch.amax(self.data, dim = 1)
+        return min, max
 
     def find_the_largest_drop(self) -> torch.Tensor:
         """
@@ -31,7 +33,9 @@ class WeatherForecast:
         Returns:
             tensor of a single value, the difference in temperature
         """
-        raise NotImplementedError
+        mean_temps = torch.nanmean(self.data, dim = 1)
+        diffs = mean_temps[1:] - mean_temps[:-1]
+        return diffs[diffs.abs().argmax()]
 
     def find_the_most_extreme_day(self) -> torch.Tensor:
         """
@@ -40,7 +44,11 @@ class WeatherForecast:
         Returns:
             tensor with size (num_days,)
         """
-        raise NotImplementedError
+        mean = self.data.mean(dim=1, keepdim=True) 
+        diffs = (self.data - mean).abs()           
+        max_indices = diffs.argmax(dim=1)           
+        return self.data[torch.arange(self.data.size(0)), max_indices]
+
 
     def max_last_k_days(self, k: int) -> torch.Tensor:
         """
@@ -49,7 +57,7 @@ class WeatherForecast:
         Returns:
             tensor of size (k,)
         """
-        raise NotImplementedError
+        return torch.amax(self.data[-k:], dim=1)
 
     def predict_temperature(self, k: int) -> torch.Tensor:
         """
@@ -62,7 +70,7 @@ class WeatherForecast:
         Returns:
             tensor of a single value, the predicted temperature
         """
-        raise NotImplementedError
+        return torch.mean(self.data[-k:], dim=1).mean()
 
     def what_day_is_this_from(self, t: torch.FloatTensor) -> torch.LongTensor:
         """
@@ -87,4 +95,5 @@ class WeatherForecast:
         Returns:
             tensor of a single value, the index of the closest data element
         """
-        raise NotImplementedError
+        diffs = (self.data - t).abs().sum(dim=1)
+        return torch.argmin(diffs)
